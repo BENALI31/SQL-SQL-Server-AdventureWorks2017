@@ -1,0 +1,24 @@
+--DROP TABLE #Table_Person_Avec_Adress_Temp
+CREATE TABLE #Table_Person_Avec_Adress_Temp
+(
+	[Prenom]		VARCHAR(50),
+	[Nom]		VARCHAR(50),
+	[Person_Date_MAJ]	DateTime,
+	[Adress] VARCHAR(400)
+)
+
+INSERT INTO #Table_Person_Avec_Adress_Temp
+SELECT 
+			[FirstName],
+			[LastName],
+			PERSON.[ModifiedDate],
+			Concat([AddressLine1],' ',[AddressLine2],' ',[City]) as Adress
+from 
+[Person].[Person] PERSON,
+[Sales].[Customer] CUSTOMER,
+[Sales].[SalesOrderHeader] SALES_ORDER,
+[Person].[Address] ADRESS
+where 
+PERSON.BusinessEntityID = CUSTOMER.PersonID
+AND CUSTOMER.CustomerID = SALES_ORDER.CustomerID
+AND ( SALES_ORDER.BillToAddressID = ADRESS.AddressID or SALES_ORDER.ShipToAddressID = ADRESS.AddressID )
