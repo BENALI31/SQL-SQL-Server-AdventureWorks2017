@@ -22,3 +22,8 @@ where
 PERSON.BusinessEntityID = CUSTOMER.PersonID
 AND CUSTOMER.CustomerID = SALES_ORDER.CustomerID
 AND ( SALES_ORDER.BillToAddressID = ADRESS.AddressID or SALES_ORDER.ShipToAddressID = ADRESS.AddressID )
+
+-- pour tester 
+select * from #Table_Person_Avec_Adress_Temp
+
+
