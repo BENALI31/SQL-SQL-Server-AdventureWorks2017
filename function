@@ -1,0 +1,72 @@
+IF EXISTS (SELECT * FROM sys.objects WHERE name = 'Last_id_Order')
+exec
+(
+'DROP FUNCTION [dbo].[Last_id_Order];'
+)
+GO
+
+Create FUNCTION [dbo].[Last_id_Order](@CustomerID [INT])
+RETURNS INT 
+AS 
+BEGIN
+    DECLARE @ListPrice int;
+
+    select @ListPrice = max(SALES_ORDER.SalesOrderID) 
+	from [Sales].[SalesOrderHeader] SALES_ORDER
+	where SALES_ORDER.CustomerID = @CustomerID
+
+    RETURN @ListPrice;
+END;
+
+--Test
+select [dbo].[Last_id_Order](29515);
+
+--#############################################################################################################################
+IF EXISTS (SELECT * FROM sys.objects WHERE name = 'Trouver_Adress_Par_Code_Postal_et_Date_MAJ')
+exec
+(
+'DROP FUNCTION [dbo].[Trouver_Adress_Par_Code_Postal_et_Date_MAJ];'
+)
+GO
+
+CREATE FUNCTION [dbo].[Trouver_Adress_Par_Code_Postal_et_Date_MAJ](@DateDebut Date, @DateFin Date, @codepostale varchar(15))
+
+RETURNS @Trouver_Adress_Par_Code_Postal_et_Date_MAJ TABLE
+   (
+  [Prenom]		VARCHAR(50),
+	[Nom]		VARCHAR(50),
+	[Person_Date_MAJ]	DateTime,
+	[Adress] VARCHAR(400)
+   )
+
+AS
+BEGIN
+   INSERT @Trouver_Adress_Par_Code_Postal_et_Date_MAJ
+
+      SELECT 
+			[FirstName],
+			[LastName],
+			PERSON.[ModifiedDate],
+			Concat([AddressLine1],' ',[AddressLine2],' ',[City]) as Adress
+			from 
+  			[Person].[Person] PERSON,
+  			[Sales].[Customer] CUSTOMER,
+  			[Sales].[SalesOrderHeader] SALES_ORDER,
+  			[Person].[Address] ADRESS
+			where 
+			PERSON.BusinessEntityID = CUSTOMER.PersonID
+			AND CUSTOMER.CustomerID = SALES_ORDER.CustomerID
+			AND ( SALES_ORDER.BillToAddressID = ADRESS.AddressID or SALES_ORDER.ShipToAddressID = ADRESS.AddressID )
+			and ADRESS.[ModifiedDate] between @DateDebut and @DateFin
+			and ADRESS.PostalCode= @codepostale 
+			--and SALES_ORDER.SalesOrderID = [dbo].[Last_id_Order](CUSTOMER.CustomerID);
+
+   RETURN
+END	
+GO
+--Test
+Select * from  [dbo].[Trouver_Adress_Par_Code_Postal_et_Date_MAJ](CONVERT(Date,'01/01/2009'), Convert(Date,'01/01/2013'),'T2P 2G8')
+
+--#############################################################################################################################
+
+
