@@ -1,0 +1,83 @@
+------------------------------------------------------------------------------------------------Exemple léger pour compréhension----------------------------------------------------------
+-- Table temporaire avec données à synchroniser
+CREATE TABLE AddressUpdates (
+    AddressID INT,
+    AddressLine1 NVARCHAR(60),
+    City NVARCHAR(30)
+);
+INSERT INTO AddressUpdates VALUES 
+(1, 'BENALI Street22', 'roue'),   -- Mise à jour d'une adresse existante
+(99998, 'BENALI 33', 'Portland');  -- Nouvelle adresse (ID inexistant)
+
+-----------------------------------------------------------------------------------
+-- Synchronisation avec MERGE
+MERGE INTO Person.Address AS CIBLE
+USING AddressUpdates AS SOURCE
+                                    ON CIBLE.AddressID = SOURCE.AddressID
+
+WHEN MATCHED THEN
+                    UPDATE SET 
+                        AddressLine1 = SOURCE.AddressLine1,
+                        City = SOURCE.City,
+                        ModifiedDate = GETDATE()
+
+WHEN NOT MATCHED  THEN 
+                        INSERT (AddressLine1, City, PostalCode, ModifiedDate,StateProvinceID,rowguid)
+                        VALUES (SOURCE.AddressLine1, SOURCE.City, '33000', GETDATE(),79,NEWID());
+------------------------------------------------------------------------------------------
+select * FROM Person.Address where AddressID in (99998,1,32523)
+select MAX(AddressID) from Person.Address ;  --c'est pour trouver la derniere ligne inseré 
+--DROP TABLE AddressUpdates;
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------Exemple un peu plus complexe -------------------------------------------------------------
+  select * from Person.Address where AddressID in (1,32526);
+select MAX(AddressID) from Person.Address ;  --c'est pour trouver la derniere ligne inseré 
+select  * from Person.Address
+select top 2 * from Person.Person;
+select top 2 * from  Person.BusinessEntityAddress;
+select  * from #AddressUpdates;
+
+-- Table temporaire avec nouvelles données (mises à jour + nouvelles adresses)
+CREATE TABLE #AddressUpdates (
+    BusinessEntityID INT,
+    AddressLine2 NVARCHAR(60),
+    City NVARCHAR(30),
+    PostalCode NVARCHAR(15)
+);
+
+INSERT INTO #AddressUpdates VALUES
+(1, 'BENALI Street', 'MOSTA_MERGE', '24001'),   -- Mise à jour pour ID existant
+(99999, 'BENALI Maple Ave', 'PortlandMERGE', '25205'); -- Nouvelle adresse pour ID inexistant
+
+-- MERGE gérant UPDATE + INSERT
+MERGE INTO Person.Address AS cible
+USING -- person  on cible.BusinessEntityID = Person.BusinessEntityID
+
+(
+            SELECT 
+                Temp_AddressUpdates.BusinessEntityID,
+                Temp_AddressUpdates.AddressLine2,
+                Temp_AddressUpdates.City,
+                Temp_AddressUpdates.PostalCode,
+                BusinessEntityAddress.AddressID -- Jointure via BusinessEntityAddress
+            
+            FROM #AddressUpdates Temp_AddressUpdates
+            LEFT JOIN Person.BusinessEntityAddress BusinessEntityAddress   ON Temp_AddressUpdates.BusinessEntityID = BusinessEntityAddress.BusinessEntityID
+       
+       ) AS source ON cible.AddressID = source.AddressID
+
+WHEN MATCHED THEN
+                    UPDATE SET
+                        cible.AddressLine1 = source.AddressLine2,
+                        cible.City = source.City,
+                        cible.PostalCode = source.PostalCode,
+                        cible.ModifiedDate = GETDATE()
+
+WHEN NOT MATCHED THEN
+
+                        INSERT (AddressLine1, City, PostalCode, ModifiedDate,StateProvinceID,rowguid)
+                        VALUES (source.AddressLine2, source.City, source.PostalCode, GETDATE(),79,NEWID());
+
+--DROP TABLE #AddressUpdates;
+-- DELETE FROM Person.Address where AddressID in (32524);
