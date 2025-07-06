@@ -1,0 +1,35 @@
+select top 3 * from Person.Address where AddressID in (1,2, 249);
+select top 2 * from Person.Person;
+select top 2 * from  Person.BusinessEntityAddress;
+-----------------------------------------------------------------------
+UPDATE Person.Address
+SET AddressLine2 ='Benali Street33'
+--,City='TEST'
+where AddressID = 1;
+-----------------------------------------------------------------------
+-- Mettre à jour l'adresse d'une personne (ID = 1)
+UPDATE Person_Address
+SET 
+    Person_Address.AddressLine2 = 'Benali Street',
+    Person_Address.City =case when Person.BusinessEntityID = 1 then 'Bordeaux'end,
+    Person_Address.ModifiedDate = GETDATE()
+FROM 
+    Person.Address Person_Address
+INNER JOIN 
+    Person.BusinessEntityAddress BusinessEntityAddress ON Person_Address.AddressID = BusinessEntityAddress.AddressID
+INNER JOIN 
+    Person.Person Person ON BusinessEntityAddress.BusinessEntityID = Person.BusinessEntityID
+WHERE 
+    Person.BusinessEntityID = 1;
+------------------------------------------------------------------------------------------------------------------------
+select 
+Person_Address.*
+--case when Person.BusinessEntityID = 1 then 'Bordeaux'end
+FROM 
+    Person.Address Person_Address
+INNER JOIN 
+    Person.BusinessEntityAddress BusinessEntityAddress ON Person_Address.AddressID = BusinessEntityAddress.AddressID
+INNER JOIN 
+    Person.Person Person ON BusinessEntityAddress.BusinessEntityID = Person.BusinessEntityID
+WHERE 
+    Person.BusinessEntityID = 1;
